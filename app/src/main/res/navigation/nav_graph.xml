@@ -16,9 +16,8 @@
     </fragment>
     <fragment
         android:id="@+id/MapFragment"
-        android:name="com.example.myapplication.SecondFragment"
-        android:label="@string/second_fragment_label"
-        tools:layout="@layout/map">
+        android:name="com.example.myapplication.MapFragment"
+        android:label="@string/second_fragment_label">
 
         <action
             android:id="@+id/action_SecondFragment_to_FirstFragment"
