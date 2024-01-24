@@ -2,6 +2,7 @@ package com.example.myapplication
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.location.Location
 import android.os.Bundle
 import android.util.Log
@@ -10,6 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.findViewTreeViewModelStoreOwner
 import com.example.myapplication.databinding.MapBinding
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -34,7 +36,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
     private var currentLocation: Location? = null
     private val monsterMarkers = mutableListOf<Marker>()
-    //private lateinit var monsterBitmapDescriptor: BitmapDescriptor
+    private lateinit var monsterBitmapDescriptor: BitmapDescriptor
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -46,13 +48,12 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        //monsterBitmapDescriptor = BitmapDescriptorFactory.fromResource(R.drawable.logo)
 
         mapView = binding.mapView
         mapView.onCreate(savedInstanceState)
         mapView.onResume()
         mapView.getMapAsync(this)
-
+        monsterBitmapDescriptor = BitmapDescriptorFactory.fromResource(R.drawable.monster)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
         requestLocationPermission()
     }
@@ -126,17 +127,22 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             val point = generatedCoordinates?.get(i)
             if (point != null) {
 
-
                 val marker = googleMap.addMarker(
                     MarkerOptions()
                         .position(LatLng(point.latitude, point.longitude))
                         .title("Monster ${i + 1}")
+                        .icon(monsterBitmapDescriptor)
+                        .anchor(0.5f, 0.5f)
                 )
                 if (marker != null) {
                     monsterMarkers.add(marker)
                 }
             }
         }
+    }
+
+    fun resizeBitmap(bitmap: Bitmap, width: Int, height: Int): Bitmap {
+        return Bitmap.createScaledBitmap(bitmap, width, height, false)
     }
 
     private fun deleteExistMarkers()

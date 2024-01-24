@@ -1,5 +1,6 @@
 package com.example.myapplication
 
+import android.graphics.Bitmap
 import android.location.Location
 import com.google.android.gms.maps.model.LatLng
 import kotlin.math.PI
