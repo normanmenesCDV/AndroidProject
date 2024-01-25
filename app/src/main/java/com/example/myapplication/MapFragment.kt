@@ -22,6 +22,9 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 class MapFragment : Fragment(), OnMapReadyCallback {
 
@@ -77,7 +80,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun updateLocation() {
-
         if (ActivityCompat.checkSelfPermission(
                 requireContext(),
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -93,30 +95,34 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             )
             return
         }
-        else {
+        else GlobalScope.launch(Dispatchers.Main) {
+
             Log.d("XXX", "XXXXXXXXXXXX")
             fusedLocationClient.lastLocation.addOnSuccessListener {
                 location ->
+                    Log.d("XXX", "${location}")
                     if (location != null) {
                         currentLocation = location;
                         var newLocation = LatLng(location.latitude, location.longitude)
-                        Log.d("XXX", "${currentLocation}")
-                        googleMap.moveCamera(CameraUpdateFactory.newLatLng(newLocation))
-                        googleMap.moveCamera(CameraUpdateFactory.zoomTo(18.0F))
+                        setCamera(newLocation, 18.0F)
                     }
                 }
         }
     }
+
     override fun onMapReady(map: GoogleMap) {
+        googleMap = map
+
         val cdv = LatLng(52.4155625, 16.9310632)
         currentLocation = Helpers().convertLatLngToLocation(cdv)
-
-        googleMap = map
-        googleMap.moveCamera(CameraUpdateFactory.newLatLng(cdv))
-        googleMap.moveCamera(CameraUpdateFactory.zoomTo(18.0F))
-
+        setCamera(cdv, 18.0F)
         generateMonsters()
         showNotification()
+    }
+
+    private fun setCamera(location: LatLng, zoom: Float) {
+        googleMap.moveCamera(CameraUpdateFactory.newLatLng(location))
+        googleMap.moveCamera(CameraUpdateFactory.zoomTo(zoom))
     }
 
     fun generateMonsters() {
@@ -142,8 +148,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
-    fun showNotification()
-    {
+    fun showNotification() {
         if (currentLocation != null && monstersLocation != null) {
             val closestMonster = Helpers().findClosestMonster(currentLocation!!, monstersLocation!!)
             if (closestMonster != null) {
@@ -153,8 +158,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
-    private fun deleteExistMarkers()
-    {
+    private fun deleteExistMarkers() {
         monsterMarkers.forEach { it.remove() }
         monsterMarkers.clear()
     }
