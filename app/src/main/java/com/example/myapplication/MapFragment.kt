@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -22,9 +21,6 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 
 class MapFragment : Fragment(), OnMapReadyCallback {
 
@@ -37,8 +33,10 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
     private var currentLocation: Location? = null
     private var monstersLocation: List<Location>? = null
-    private val monsterMarkers = mutableListOf<Marker>()
+    private var locationMarkers: Marker? = null
+    private var monsterMarkers = mutableListOf<Marker>()
     private lateinit var monsterBitmapDescriptor: BitmapDescriptor
+    private lateinit var pointBitmapDescriptor: BitmapDescriptor
 
     private lateinit var notificationHelper: Notification
 
@@ -46,6 +44,11 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
+        val cdvLocation = Helpers().convertLatLngToLocation(LatLng(52.4155625, 16.9310632))
+        currentLocation = cdvLocation
+        requestLocationPermission()
+
         _binding = MapBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -58,7 +61,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         mapView.onResume()
         mapView.getMapAsync(this)
         monsterBitmapDescriptor = BitmapDescriptorFactory.fromResource(R.drawable.monster)
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
+        pointBitmapDescriptor = BitmapDescriptorFactory.fromResource(R.drawable.point)
+
         requestLocationPermission()
         notificationHelper = Notification(requireContext())
     }
@@ -95,16 +99,15 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             )
             return
         }
-        else GlobalScope.launch(Dispatchers.Main) {
-
-            Log.d("XXX", "XXXXXXXXXXXX")
+        else {
             fusedLocationClient.lastLocation.addOnSuccessListener {
                 location ->
-                    Log.d("XXX", "${location}")
                     if (location != null) {
                         currentLocation = location;
-                        var newLocation = LatLng(location.latitude, location.longitude)
-                        setCamera(newLocation, 18.0F)
+                        setCamera(currentLocation!!, 18.0F)
+                        addCurrentLocationMarker(currentLocation!!)
+                        generateMonsters()
+                        showNotification()
                     }
                 }
         }
@@ -112,23 +115,32 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
     override fun onMapReady(map: GoogleMap) {
         googleMap = map
-
-        val cdv = LatLng(52.4155625, 16.9310632)
-        currentLocation = Helpers().convertLatLngToLocation(cdv)
-        setCamera(cdv, 18.0F)
-        generateMonsters()
-        showNotification()
     }
 
-    private fun setCamera(location: LatLng, zoom: Float) {
-        googleMap.moveCamera(CameraUpdateFactory.newLatLng(location))
+    private fun setCamera(location: Location, zoom: Float) {
+        val newLatLng = LatLng(location.latitude, location.longitude)
+        googleMap.moveCamera(CameraUpdateFactory.newLatLng(newLatLng))
         googleMap.moveCamera(CameraUpdateFactory.zoomTo(zoom))
+    }
+    private fun addCurrentLocationMarker(location: Location) {
+        locationMarkers = null
+        //googleMap.clear()
+        val latLng = LatLng(location.latitude, location.longitude)
+
+        val markerOptions = MarkerOptions()
+            .position(latLng)
+            .title("Moja aktualna lokalizacja")
+            .icon(pointBitmapDescriptor)
+
+        locationMarkers = googleMap.addMarker(markerOptions)
+        locationMarkers?.showInfoWindow()
     }
 
     fun generateMonsters() {
         monstersLocation = Helpers().generateListLocationsNearNocation(currentLocation!!, 5.0, 10)
 
-        deleteExistMarkers()
+        monsterMarkers.forEach { it.remove() }
+        monsterMarkers.clear()
 
         for (i in monstersLocation?.indices!!) {
             val point = monstersLocation?.get(i)
@@ -156,11 +168,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 notificationHelper.showNotification("Uwaga", "Najbliższy potwór jest oddalony o $distanceInMeters metrów.")
             }
         }
-    }
-
-    private fun deleteExistMarkers() {
-        monsterMarkers.forEach { it.remove() }
-        monsterMarkers.clear()
     }
 
     override fun onResume() {
