@@ -1,6 +1,5 @@
 package com.example.myapplication
 
-import android.graphics.Bitmap
 import android.location.Location
 import com.google.android.gms.maps.model.LatLng
 import kotlin.math.PI
@@ -44,5 +43,36 @@ class Helpers {
         location.latitude = latLng.latitude
         location.longitude = latLng.longitude
         return location
+    }
+
+    fun generateListLocationsNearNocation(currentLocation: Location, maxDistanceInKm: Double, number: Int): List<Location> {
+        val radiusInKm = maxDistanceInKm
+        val numberOfPoints = number
+        return currentLocation?.let { Helpers().generateRandomCoordinates(it, radiusInKm, numberOfPoints) }!!
+    }
+
+    fun calculateDistanceInMeters(location1: Location, location2: Location): Float {
+        val results = FloatArray(1)
+        Location.distanceBetween(
+            location1.latitude, location1.longitude,
+            location2.latitude, location2.longitude,
+            results
+        )
+        return results[0]
+    }
+
+    fun findClosestMonster(currentLocation: Location, monstersLocation: List<Location>): Location? {
+        var closestMonster: Location? = null
+        var minDistance = Float.MAX_VALUE
+
+        for (monsterLocation in monstersLocation) {
+            val distance = calculateDistanceInMeters(currentLocation, monsterLocation)
+            if (distance < minDistance) {
+                minDistance = distance
+                closestMonster = monsterLocation
+            }
+        }
+
+        return closestMonster
     }
 }

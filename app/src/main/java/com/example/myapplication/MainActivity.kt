@@ -17,9 +17,8 @@ import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import com.google.android.material.snackbar.Snackbar
 import com.example.myapplication.databinding.ActivityMainBinding
-//import kotlinx.android.synthetic.main.activity_main.*
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), NotificationListener {
 
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
@@ -27,7 +26,6 @@ class MainActivity : AppCompatActivity() {
     // powiadomienia
     private val CHANNEL_ID = "my_channel_id"
     private val NOTIFICATION_ID = 1
-    private var powiadomienie = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,10 +42,13 @@ class MainActivity : AppCompatActivity() {
                 .setAction("Action", null).show()
         }
 
-        // Sprawdź, czy powiadomienie ma być wyświetlone
-        if (powiadomienie) {
-            // Wywołaj funkcję do wyświetlenia powiadomienia
-            showNotification()
+        if (savedInstanceState == null) {
+            val mapFragment = MapFragment()
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, mapFragment)
+                .commit()
+
+            mapFragment.setNotificationListener(this)
         }
     }
 
@@ -73,8 +74,7 @@ class MainActivity : AppCompatActivity() {
                 || super.onSupportNavigateUp()
     }
 
-    private fun showNotification() {
-        // Utwórz kanał powiadomień dla urządzeń z Androidem w wersji 8.0 (Oreo) i nowszych
+    override fun showNotification(tytul: String, tresc: String) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
@@ -95,12 +95,16 @@ class MainActivity : AppCompatActivity() {
 
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.monster)
-            .setContentTitle("Witaj w aplikacji")
-            .setContentText("Będziemy Ciebie ostrzegać o nadchodzących zagrożeniach!")
+            .setContentTitle(tytul)
+            .setContentText(tresc)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
 
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.notify(NOTIFICATION_ID, builder.build())
     }
+}
+
+interface NotificationListener {
+    fun showNotification(tytul: String, tresc: String)
 }

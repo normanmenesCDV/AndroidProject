@@ -2,7 +2,6 @@ package com.example.myapplication
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.location.Location
 import android.os.Bundle
 import android.util.Log
@@ -34,8 +33,15 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     private var currentLocation: Location? = null
+    private var monstersLocation: List<Location>? = null
     private val monsterMarkers = mutableListOf<Marker>()
     private lateinit var monsterBitmapDescriptor: BitmapDescriptor
+
+    private var notificationListener: NotificationListener? = null
+
+    fun setNotificationListener(listener: NotificationListener) {
+        notificationListener = listener
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -112,19 +118,21 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         googleMap.moveCamera(CameraUpdateFactory.newLatLng(cdv))
         googleMap.moveCamera(CameraUpdateFactory.zoomTo(18.0F))
 
-        generateMonsters()
+        if (monstersLocation == null)
+        {
+            generateMonsters()
+            showNotification()
+        }
     }
 
     fun generateMonsters() {
-        val radiusInKm = 5.0
-        val numberOfPoints = 10
-        val generatedCoordinates =
-            currentLocation?.let { Helpers().generateRandomCoordinates(it, radiusInKm, numberOfPoints) }
+        Log.d("Generowanie potwora", "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+        monstersLocation = Helpers().generateListLocationsNearNocation(currentLocation!!, 5.0, 10)
 
         deleteExistMarkers()
 
-        for (i in 0 until numberOfPoints) {
-            val point = generatedCoordinates?.get(i)
+        for (i in monstersLocation?.indices!!) {
+            val point = monstersLocation?.get(i)
             if (point != null) {
 
                 val marker = googleMap.addMarker(
@@ -141,8 +149,15 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
-    fun resizeBitmap(bitmap: Bitmap, width: Int, height: Int): Bitmap {
-        return Bitmap.createScaledBitmap(bitmap, width, height, false)
+    fun showNotification()
+    {
+        if (currentLocation != null && monstersLocation != null) {
+            val closestMonster = Helpers().findClosestMonster(currentLocation!!, monstersLocation!!)
+            if (closestMonster != null) {
+                val distanceInMeters = Helpers().calculateDistanceInMeters(currentLocation!!, closestMonster)
+                notificationListener?.showNotification("Uwaga", "Najbliższy potwór jest oddalony o $distanceInMeters metrów.")
+            }
+        }
     }
 
     private fun deleteExistMarkers()
