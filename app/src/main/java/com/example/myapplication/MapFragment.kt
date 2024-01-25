@@ -37,11 +37,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private val monsterMarkers = mutableListOf<Marker>()
     private lateinit var monsterBitmapDescriptor: BitmapDescriptor
 
-    private var notificationListener: NotificationListener? = null
-
-    fun setNotificationListener(listener: NotificationListener) {
-        notificationListener = listener
-    }
+    private lateinit var notificationHelper: Notification
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -61,6 +57,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         monsterBitmapDescriptor = BitmapDescriptorFactory.fromResource(R.drawable.monster)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
         requestLocationPermission()
+        notificationHelper = Notification(requireContext())
     }
 
     private fun requestLocationPermission() {
@@ -118,15 +115,11 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         googleMap.moveCamera(CameraUpdateFactory.newLatLng(cdv))
         googleMap.moveCamera(CameraUpdateFactory.zoomTo(18.0F))
 
-        if (monstersLocation == null)
-        {
-            generateMonsters()
-            showNotification()
-        }
+        generateMonsters()
+        showNotification()
     }
 
     fun generateMonsters() {
-        Log.d("Generowanie potwora", "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
         monstersLocation = Helpers().generateListLocationsNearNocation(currentLocation!!, 5.0, 10)
 
         deleteExistMarkers()
@@ -155,7 +148,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             val closestMonster = Helpers().findClosestMonster(currentLocation!!, monstersLocation!!)
             if (closestMonster != null) {
                 val distanceInMeters = Helpers().calculateDistanceInMeters(currentLocation!!, closestMonster)
-                notificationListener?.showNotification("Uwaga", "Najbliższy potwór jest oddalony o $distanceInMeters metrów.")
+                notificationHelper.showNotification("Uwaga", "Najbliższy potwór jest oddalony o $distanceInMeters metrów.")
             }
         }
     }

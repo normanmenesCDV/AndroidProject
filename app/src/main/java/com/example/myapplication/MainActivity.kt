@@ -1,16 +1,9 @@
 package com.example.myapplication
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
-import android.content.Context
-import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.NotificationCompat
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
@@ -18,14 +11,10 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import com.google.android.material.snackbar.Snackbar
 import com.example.myapplication.databinding.ActivityMainBinding
 
-class MainActivity : AppCompatActivity(), NotificationListener {
+class MainActivity : AppCompatActivity() {
 
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
-
-    // powiadomienia
-    private val CHANNEL_ID = "my_channel_id"
-    private val NOTIFICATION_ID = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,15 +29,6 @@ class MainActivity : AppCompatActivity(), NotificationListener {
         binding.fab.setOnClickListener { view ->
             Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show()
-        }
-
-        if (savedInstanceState == null) {
-            val mapFragment = MapFragment()
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, mapFragment)
-                .commit()
-
-            mapFragment.setNotificationListener(this)
         }
     }
 
@@ -73,38 +53,4 @@ class MainActivity : AppCompatActivity(), NotificationListener {
         return navController.navigateUp(appBarConfiguration)
                 || super.onSupportNavigateUp()
     }
-
-    override fun showNotification(tytul: String, tresc: String) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "My Channel",
-                NotificationManager.IMPORTANCE_DEFAULT
-            )
-            val manager = getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(channel)
-        }
-
-        val intent = Intent(this, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(
-            this,
-            0,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT
-        )
-
-        val builder = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.drawable.monster)
-            .setContentTitle(tytul)
-            .setContentText(tresc)
-            .setContentIntent(pendingIntent)
-            .setAutoCancel(true)
-
-        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.notify(NOTIFICATION_ID, builder.build())
-    }
-}
-
-interface NotificationListener {
-    fun showNotification(tytul: String, tresc: String)
 }
