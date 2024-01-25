@@ -1,11 +1,11 @@
 <resources>
-    <string name="app_name">My Application</string>
+    <string name="app_name">Potwór</string>
     <string name="action_settings">Settings</string>
     <!-- Strings used for fragments for navigation -->
-    <string name="first_fragment_label">First Fragment</string>
-    <string name="second_fragment_label">Second Fragment</string>
-    <string name="next">Next</string>
-    <string name="previous">Previous</string>
+    <string name="first_fragment_label">Panel główny</string>
+    <string name="second_fragment_label">Mapa</string>
+    <string name="next">Dalej</string>
+    <string name="previous">Cofnij</string>
 
     <string name="lorem_ipsum">
         Hello world!

@@ -11,7 +11,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.findViewTreeViewModelStoreOwner
 import com.example.myapplication.databinding.MapBinding
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -75,6 +74,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun updateLocation() {
+
         if (ActivityCompat.checkSelfPermission(
                 requireContext(),
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -83,26 +83,26 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 Manifest.permission.ACCESS_COARSE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
+            ActivityCompat.requestPermissions(
+                requireActivity(),
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                REQUEST_LOCATION_PERMISSION
+            )
             return
         }
-        Log.d("XXX", "XXXXXXXXXXXX")
-        fusedLocationClient.lastLocation
-            .addOnSuccessListener { location ->
-                if (location != null) {
-                    currentLocation = location;
-                    var newLocation = LatLng(location.latitude, location.longitude)
-                    Log.d("XXX", "${currentLocation}")
-                    googleMap.moveCamera(CameraUpdateFactory.newLatLng(newLocation))
-                    googleMap.moveCamera(CameraUpdateFactory.zoomTo(18.0F))
+        else {
+            Log.d("XXX", "XXXXXXXXXXXX")
+            fusedLocationClient.lastLocation.addOnSuccessListener {
+                location ->
+                    if (location != null) {
+                        currentLocation = location;
+                        var newLocation = LatLng(location.latitude, location.longitude)
+                        Log.d("XXX", "${currentLocation}")
+                        googleMap.moveCamera(CameraUpdateFactory.newLatLng(newLocation))
+                        googleMap.moveCamera(CameraUpdateFactory.zoomTo(18.0F))
+                    }
                 }
-            }
+        }
     }
     override fun onMapReady(map: GoogleMap) {
         val cdv = LatLng(52.4155625, 16.9310632)
